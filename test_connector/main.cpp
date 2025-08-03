@@ -5,6 +5,7 @@
 
 // 创建一个server pipe
 int main() {
+    std::system("chcp 65001");
     WinPipeConnector connector("sensor_data");
     auto a = connector.is_connected();
     std::cout << a << std::endl;
