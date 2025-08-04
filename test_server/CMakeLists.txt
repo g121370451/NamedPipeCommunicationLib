@@ -10,4 +10,5 @@ add_executable(SensorBridgeServer ${PROJECT_SOURCE_DIR}/main.cpp
 target_link_libraries(SensorBridgeServer
         PRIVATE
         NamedPipeLib
+        spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
 )

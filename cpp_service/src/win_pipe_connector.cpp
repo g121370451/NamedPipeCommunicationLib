@@ -1,6 +1,7 @@
 #include "win_pipe_connector.h"
 #include <windows.h>
 #include <iostream>
+#include "spdlog/spdlog.h"
 
 WinPipeConnector::WinPipeConnector(const std::string&  pipe_name)
     : pipe_name_(R"(\\.\pipe\)" + pipe_name) {
@@ -58,6 +59,7 @@ void WinPipeConnector::start_receiving(const MessageCallback& callback) {
     if (receiving_ || !connected_) return;
     receiving_ = true;
     recv_thread_ = std::thread(&WinPipeConnector::receive_loop, this, callback);
+    std::cout << "设置回调成功" << std::endl;
 }
 
 void WinPipeConnector::stop_receiving() {
@@ -73,8 +75,10 @@ void WinPipeConnector::receive_loop(const MessageCallback& callback) {
     constexpr size_t BUFFER_SIZE = 4096;
     char buffer[BUFFER_SIZE];
 
+    std::cout << "接收状态为" << receiving_ << std::endl;
     while (receiving_) {
         DWORD bytes_read = 0;
+        spdlog::info("开始监听{}", GetProcessId(pipe_handle_));
         BOOL success = ReadFile(
             pipe_handle_,
             buffer,
@@ -82,6 +86,7 @@ void WinPipeConnector::receive_loop(const MessageCallback& callback) {
             &bytes_read,
             nullptr);
 
+        std::cout << "结束监听" <<std::endl;
         if (!success || bytes_read == 0) {
             // 断线
             std::cerr << "Pipe read failed or closed: " << GetLastError() << std::endl;

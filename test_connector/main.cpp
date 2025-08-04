@@ -7,11 +7,16 @@
 int main() {
     std::system("chcp 65001");
     WinPipeConnector connector("sensor_data");
+    connector.connect();
     auto a = connector.is_connected();
     std::cout << a << std::endl;
-    connector.connect();
     connector.start_receiving([](const std::string& str) {
         std::cout << str << std::endl;
     });
-    std::system("pause");
+    auto test = std::thread([](){while(true){
+
+    }});
+    if(test.joinable()){
+        test.join();
+    }
 }

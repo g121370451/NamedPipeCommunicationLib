@@ -20,3 +20,4 @@ target_include_directories(NamedPipeLib PUBLIC
         ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/third
 )
+target_link_libraries(NamedPipeLib PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>)

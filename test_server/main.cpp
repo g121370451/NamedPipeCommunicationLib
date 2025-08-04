@@ -11,8 +11,15 @@ int main() {
         // std::cout << "服务端推送 send: " << request << ":" << response << std::endl;
         response = "服务端推送 send: 100";
     });
-    while (true) {
-        const bool res = server.send_to_all_clients("一个测试消息");
+
+    auto threadSend = std::thread([&server](){
+        while(true){
+            server.send_to_all_clients("test");
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    });
+    if(threadSend.joinable()){
+        threadSend.join();
     }
     return 0;
 }

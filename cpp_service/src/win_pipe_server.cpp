@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <thread>
+#include "spdlog/spdlog.h"
 
 CRITICAL_SECTION WinPipeServer::clients_mutex_;
 
@@ -53,7 +54,7 @@ void WinPipeServer::accept_loop() {
             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
             PIPE_UNLIMITED_INSTANCES,
             4096, 4096,
-            0, nullptr);
+            1000, nullptr);
 
         if (pipe == INVALID_HANDLE_VALUE) {
             std::cerr << "Failed to create pipe: " << GetLastError() << std::endl;
@@ -65,6 +66,7 @@ void WinPipeServer::accept_loop() {
                          TRUE : (GetLastError() == ERROR_PIPE_CONNECTED);
 
         if (connected && running_) {
+            std::cout << "有设备接入 " << std::endl;
             EnterCriticalSection(&clients_mutex_);
             clients_.push_back(pipe);
             LeaveCriticalSection(&clients_mutex_);
@@ -108,12 +110,18 @@ void WinPipeServer::client_handler(const HANDLE pipe) {
 
 bool WinPipeServer::send_to_all_clients(const std::string& message) const {
     EnterCriticalSection(&clients_mutex_);
+    char message1[] = "Hello";
     for (const HANDLE client : clients_) {
+        spdlog::info("发送设备{},大小为{}",GetProcessId(client),static_cast<DWORD>(message.size()));
         DWORD bytesWritten;
-        if (const BOOL success = WriteFile(client, message.c_str(), static_cast<DWORD>(message.size()), &bytesWritten, nullptr); !success) {
+        const BOOL success = WriteFile(client, message1, 6, &bytesWritten, nullptr);
+//        const BOOL success = WriteFile(client, message.c_str(), static_cast<DWORD>(message.size()), &bytesWritten, nullptr);
+        if (!success) {
             std::cerr << "Failed to send message to client." << std::endl;
         }
+        std::cout <<"written size is " << bytesWritten << std::endl;
     }
     LeaveCriticalSection(&clients_mutex_);
+    std::cout << "发送完毕" << std::endl;
     return true;
 }
