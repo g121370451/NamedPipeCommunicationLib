@@ -71,7 +71,7 @@ void WinPipeServer::accept_loop() {
             clients_.push_back(pipe);
             LeaveCriticalSection(&clients_mutex_);
 
-            client_threads_.emplace_back(&WinPipeServer::client_handler, this, pipe);
+            // client_threads_.emplace_back(&WinPipeServer::client_handler, this, pipe);
         } else {
             CloseHandle(pipe);
         }
