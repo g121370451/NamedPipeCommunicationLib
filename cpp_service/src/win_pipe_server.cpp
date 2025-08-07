@@ -22,6 +22,7 @@ void WinPipeServer::start(const MessageCallback &callback) {
     running_ = true;
 //    on_message_ = callback;
     accept_thread_ = std::thread(&WinPipeServer::accept_loop, this);
+    spdlog::info("named pipe server started ,listening on {}", pipe_name_);
 }
 
 void WinPipeServer::stop() {
@@ -64,15 +65,18 @@ void WinPipeServer::accept_loop() {
         }
         OVERLAPPED overlapped = {0};
         overlapped.hEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
-        // 启用命名管道服务器进程，等待客户端进程连接到命名管道实例。客户端进程通过调用 CreateFile或 CallNamedPipe函数进行连接。
+        if (!overlapped.hEvent) {
+            std::cerr << "CreateEvent 失败, GLE=" << GetLastError() << std::endl;
+            CloseHandle(pipe);
+            continue;
+        }
         ConnectNamedPipe(pipe, &overlapped);
-        // 异步等待事件触发
         DWORD waitResult = WaitForSingleObject(overlapped.hEvent, INFINITE);
         if (waitResult == WAIT_OBJECT_0 && running_) {
             DWORD bytesTransferred = 0;
             BOOL success = GetOverlappedResult(pipe, &overlapped, &bytesTransferred, FALSE);
             if (success) {
-                std::cout << "有设备接入 " << std::endl;
+                std::cout << "新客户端连接，为其创建处理线程..." << std::endl;
                 this->clients_.push_back(pipe);
                 // 添加管理通道对当前事件的监听
                 client_threads_.emplace_back(&WinPipeServer::client_handler, this, pipe);

@@ -10,12 +10,14 @@ add_library(NamedPipeLib STATIC
         include/win_pipe_server.h
         src/win_pipe_connector.cpp
         include/win_pipe_connector.h
-        src/message_dispatcher.cpp
-        include/message_dispatcher.h
         src/json_util.cpp
         include/json_util.h
-        third/json.hpp
         include/pipe_entity.h
+        src/pipe_entity.cpp
+        third/json.hpp
+        include/protocol.h
+        include/client_handler.h
+        src/client_handler.cpp
 )
 target_include_directories(NamedPipeLib PUBLIC
         ${PROJECT_SOURCE_DIR}/include
