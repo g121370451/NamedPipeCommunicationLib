@@ -14,7 +14,6 @@ int main() {
 
     auto threadSend = std::thread([&server](){
         while(true){
-            server.send_to_all_clients("test");
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     });

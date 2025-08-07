@@ -2,26 +2,30 @@
 
 #include <string>
 #include <thread>
+#include <utility>
 #include <vector>
 #include <functional>
+#include <map>
 #include <atomic>
 #include <windows.h>
 #include "json_util.h"
+#include "pipe_entity.h"
 
 /**
- * 管理 Pipe 服务端创建、监听、接入连接(要可以维护多个连接) + 观察者
+ * 管理 Pipe 服务端创建、监听控制链接。创建数据连接，(要可以维护多个独立的数据连接) + 观察者
  */
 class WinPipeServer {
 public:
     // 客户端句柄访问保护
     static CRITICAL_SECTION clients_mutex_;
+    // 临时的观察者 之后改一种写法
     using MessageCallback = std::function<void(const std::string& request, std::string& response)>;
 
     explicit WinPipeServer(const std::string& pipe_name);
     ~WinPipeServer();
 
     /**
-     * 服务启动
+     * 服务启动 创建管理通道
      * @param callback 设置消息回调
      */
     void start(const MessageCallback &callback);
@@ -30,28 +34,29 @@ public:
      * 服务暂停
      */
     void stop();
+private:
 
     /**
-     * 广播发送数据
-     * @param message 进入message回调的消息
-     * @return 是否发送成功
+     * 保存所有的数据通道的信息指针
+     * key是source,value是信息实体
      */
-    bool send_to_all_clients(const std::string& message) const;
-private:
+    std::map<std::string,ClientDataChanelInfo> _client_map;
+
+    // 控制管道的链接监听
     void accept_loop();
 
     /**
-     * 使用客户端线程异步监听客户端消息
+     * 管理通道 处理多个客户端连接的方法
      * @param pipe 需要监听的客户端
      */
     void client_handler(HANDLE pipe);
 
     /**
-     * 连接名称
+     * 管理通道连接名称
      */
     std::string pipe_name_;
     /**
-     * 是否开启的原子特征值
+     * 管理通道是否开启的原子特征值
      */
     std::atomic<bool> running_;
     /**
@@ -59,11 +64,11 @@ private:
      */
     std::thread accept_thread_;
     /**
-     * 处理客户端连接的req请求的线程
+     * 管理通道 处理req请求的线程
      */
     std::vector<std::thread> client_threads_;
     /**
-     * 客户端句柄数组
+     * 管理通道 句柄数组
      */
     std::vector<HANDLE> clients_;
 

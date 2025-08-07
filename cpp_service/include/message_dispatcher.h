@@ -1,8 +1,2 @@
-//
-// Created by Administrator on 25-8-1.
-//
-
-#ifndef MESSAGE_DISPATCHER_H
-#define MESSAGE_DISPATCHER_H
-
-#endif //MESSAGE_DISPATCHER_H
+#pragma once
+// 用于配置消息处理函数

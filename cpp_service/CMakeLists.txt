@@ -15,6 +15,7 @@ add_library(NamedPipeLib STATIC
         src/json_util.cpp
         include/json_util.h
         third/json.hpp
+        include/pipe_entity.h
 )
 target_include_directories(NamedPipeLib PUBLIC
         ${PROJECT_SOURCE_DIR}/include
