@@ -3,6 +3,7 @@
 #include <thread>
 #include <atomic>
 #include "json.hpp"
+#include "pipe_entity.h"
 
 /**
  * 管理通道的客户端响应 使用状态机的模式
@@ -48,10 +49,9 @@ private:
      */
     void processControlMessage(const nlohmann::json& msg);
 
-    // TODO: 主动发送数据给客户端 还这个需求 不用实现
     bool sendControlMessage(const nlohmann::json& msg);
 
-    bool readControlMessage(nlohmann::json& msgJson);
+    bool readControlMessage(nlohmann::json& msgJson, int delay = 0);
 
     HANDLE m_hControlPipe;
     HANDLE m_hDataPipe;
@@ -61,6 +61,7 @@ private:
     HANDLE m_hReadEvent;         // 用于控制通道读取操作完成时触发的事件
     HANDLE m_hWriteEvent;        // 用于控制通道写入操作完成时触发的事件
 
+    SeqGenerator m_seq_counter;
     std::atomic<bool> m_sessionActive;
     std::thread m_periodicDataThread;
     std::atomic<bool> m_isPushingData;
