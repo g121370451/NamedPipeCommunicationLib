@@ -15,15 +15,6 @@ class ClientDataChanelInfo{
 public:
     explicit ClientDataChanelInfo(std::string pipe_name, HANDLE pipe_handle, int delay);
     HANDLE getHandle() const;
-    bool start();
-    bool stop();
-    bool destroy();
-    DataChanelStatus status();
-
-    // TODO 之后可以考虑把这个单独提一个类型出去
-    // 设置gpu 获取gpu列表。考虑是放在控制还是数据 之后再说
-    // 先发送长度帧首 再发送湖北经
-    bool sendData();
 private:
     HANDLE pipe_handle;
     std::string pipe_name;

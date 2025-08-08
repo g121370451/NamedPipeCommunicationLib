@@ -13,7 +13,3 @@ HANDLE ClientDataChanelInfo::getHandle() const {
     return this->pipe_handle;
 }
 
-bool ClientDataChanelInfo::start() {
-
-}
-

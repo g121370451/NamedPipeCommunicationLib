@@ -49,11 +49,21 @@ private:
     void processControlMessage(const nlohmann::json& msg);
 
     // TODO: 主动发送数据给客户端 还这个需求 不用实现
-    void sendControlMessage(const nlohmann::json& msg);
+    bool sendControlMessage(const nlohmann::json& msg);
+
+    bool readControlMessage(nlohmann::json& msgJson);
 
     HANDLE m_hControlPipe;
     HANDLE m_hDataPipe;
+
+    OVERLAPPED m_readOvl;        // 用于控制通道读取的OVERLAPPED结构
+    OVERLAPPED m_writeOvl;       // 用于控制通道写入的OVERLAPPED结构
+    HANDLE m_hReadEvent;         // 用于控制通道读取操作完成时触发的事件
+    HANDLE m_hWriteEvent;        // 用于控制通道写入操作完成时触发的事件
+
     std::atomic<bool> m_sessionActive;
     std::thread m_periodicDataThread;
     std::atomic<bool> m_isPushingData;
+
+    std::string m_clientId;
 };

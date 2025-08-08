@@ -10,6 +10,7 @@
 #include <windows.h>
 #include "json_util.h"
 #include "pipe_entity.h"
+#include "client_handler.h"
 
 /**
  * 管理 Pipe 服务端创建、监听控制链接。创建数据连接，(要可以维护多个独立的数据连接) + 观察者
@@ -45,11 +46,11 @@ private:
     // 控制管道的链接监听
     void accept_loop();
 
-    /**
-     * 管理通道 处理多个客户端连接的方法
-     * @param pipe 需要监听的客户端
-     */
-    void client_handler(HANDLE pipe);
+//    /**
+//     * 管理通道 处理多个客户端连接的方法
+//     * @param pipe 需要监听的客户端
+//     */
+//    void client_handler(HANDLE pipe);
 
     /**
      * 管理通道连接名称
@@ -70,7 +71,7 @@ private:
     /**
      * 管理通道 句柄数组
      */
-    std::vector<HANDLE> clients_;
+    std::vector<std::unique_ptr<ClientHandler>> clients_;
 
     /**
      * 广播的同一回调方法

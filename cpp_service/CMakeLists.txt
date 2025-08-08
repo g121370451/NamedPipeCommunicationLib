@@ -22,5 +22,9 @@ add_library(NamedPipeLib STATIC
 target_include_directories(NamedPipeLib PUBLIC
         ${PROJECT_SOURCE_DIR}/include
         ${PROJECT_SOURCE_DIR}/third
+        ${Boost_INCLUDE_DIRS}
 )
-target_link_libraries(NamedPipeLib PRIVATE spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>)
+target_link_libraries(NamedPipeLib PRIVATE
+        spdlog::spdlog $<$<BOOL:${MINGW}>:ws2_32>
+        ${Boost_LIBRARIES}
+)
