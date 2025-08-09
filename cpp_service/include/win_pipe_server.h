@@ -20,7 +20,7 @@ public:
     // 客户端句柄访问保护
     static CRITICAL_SECTION clients_mutex_;
     // 临时的观察者 之后改一种写法
-    using MessageCallback = std::function<void(const std::string& request, std::string& response)>;
+    using ClosedCallback = std::function<void(ClientHandler* clientHandler)>;
 
     explicit WinPipeServer(const std::string& pipe_name);
     ~WinPipeServer();
@@ -29,7 +29,7 @@ public:
      * 服务启动 创建管理通道
      * @param callback 设置消息回调
      */
-    void start(const MessageCallback &callback);
+    void start();
 
     /**
      * 服务暂停
@@ -45,12 +45,6 @@ private:
 
     // 控制管道的链接监听
     void accept_loop();
-
-//    /**
-//     * 管理通道 处理多个客户端连接的方法
-//     * @param pipe 需要监听的客户端
-//     */
-//    void client_handler(HANDLE pipe);
 
     /**
      * 管理通道连接名称
@@ -76,5 +70,5 @@ private:
     /**
      * 广播的同一回调方法
      */
-    MessageCallback on_message_;
+    ClosedCallback on_closed_;
 };

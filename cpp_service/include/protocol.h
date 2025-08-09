@@ -2,6 +2,7 @@
 #include <string>
 
 namespace protocol {
+    const std::string CONTROL_PIPE_NAME = R"(\\.\pipe\)";
     // 控制消息类型
     namespace type {
         const std::string CLIENT_HELLO = "CLIENT_HELLO";
@@ -12,6 +13,8 @@ namespace protocol {
         const std::string STOP_PERIODIC_DATA = "STOP_PERIODIC_DATA";
         const std::string ACK = "ACK";
         const std::string GOODBYE = "GOODBYE";
+        const std::string GET_GPU_LIST = "GET_GPU_LIST";
+        const std::string SET_GPU = "SET_GPU";
     }
 
     // JSON字段名

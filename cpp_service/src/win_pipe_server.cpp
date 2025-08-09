@@ -10,6 +10,14 @@ CRITICAL_SECTION WinPipeServer::clients_mutex_;
 WinPipeServer::WinPipeServer(const std::string &pipe_name)
         : pipe_name_(R"(\\.\pipe\)" + pipe_name), running_(false) {
     InitializeCriticalSection(&clients_mutex_);
+    this->on_closed_ = [](ClientHandler* clientHandler){
+        EnterCriticalSection(&clients_mutex_);
+        clientHandler->stop();
+        std::erase_if(this->client_threads_, [](const Task& t) {
+            return t.isClosed();
+        });
+        LeaveCriticalSection(&clients_mutex_);
+    };
 }
 
 
@@ -18,10 +26,9 @@ WinPipeServer::~WinPipeServer() {
     DeleteCriticalSection(&clients_mutex_);
 }
 
-void WinPipeServer::start(const MessageCallback &callback) {
+void WinPipeServer::start() {
     if (running_) return;
     running_ = true;
-//    on_message_ = callback;
     accept_thread_ = std::thread(&WinPipeServer::accept_loop, this);
     spdlog::info("管道开启-监听 {} 中....", pipe_name_);
 }
@@ -32,12 +39,12 @@ void WinPipeServer::stop() {
 
     // 断开所有客户端 clients
     EnterCriticalSection(&clients_mutex_);
-    //TODO 删除所有链接
-//    for (std::unique_ptr<ClientHandler> client: clients_) {
-//        DisconnectNamedPipe(client.get());
-//        CloseHandle(client.get());
-//        client = INVALID_HANDLE_VALUE;
-//    }
+//    TODO 删除所有链接
+    for (std::unique_ptr<ClientHandler> client: clients_) {
+        DisconnectNamedPipe(client.get());
+        CloseHandle(client.get());
+        client = INVALID_HANDLE_VALUE;
+    }
     clients_.clear();
     LeaveCriticalSection(&clients_mutex_);
 
@@ -59,7 +66,7 @@ void WinPipeServer::accept_loop() {
                 PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                 PIPE_UNLIMITED_INSTANCES,// 可以多个客户端连接管理通道
                 4096, 4096,
-                1000, nullptr);
+                NMPWAIT_USE_DEFAULT_WAIT, nullptr);
 
         if (pipe == INVALID_HANDLE_VALUE) {
             std::cerr << "Failed to create pipe: " << GetLastError() << std::endl;
@@ -91,87 +98,3 @@ void WinPipeServer::accept_loop() {
         }
     }
 }
-
-//void WinPipeServer::client_handler(HANDLE pipe) {
-//    char buffer[4096];
-//    OVERLAPPED readOverlapped = {0};
-//    readOverlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);  // 创建手动重置事件
-//
-//    while (running_) {
-//        DWORD bytesRead = 0;
-//
-//        // 发起异步读取
-//        if (!ReadFile(pipe, buffer, 4095, &bytesRead, &readOverlapped)) {
-//            DWORD err = GetLastError();
-//            if (err == ERROR_IO_PENDING) {
-//                // 正常异步等待
-//                WaitForSingleObject(readOverlapped.hEvent, INFINITE);
-//
-//                // 获取实际读取的字节数
-//                if (!GetOverlappedResult(pipe, &readOverlapped, &bytesRead, FALSE)) {
-//                    std::cerr << "GetOverlappedResult failed: " << GetLastError() << std::endl;
-//                    break;
-//                }
-//            } else {
-//                std::cerr << "ReadFile failed: " << err << std::endl;
-//                break;
-//            }
-//        }
-//        spdlog::info("rrr");
-//        // 处理接收到的数据
-//        if (bytesRead > 0) {
-//            buffer[bytesRead] = '\0';
-//            std::string request(buffer);
-//            std::string response;
-//
-//            // 调用消息处理回调
-//            if (on_message_) {
-//                on_message_(request, response);
-//            } else {
-//                // 默认响应
-//                response = "test_response";
-//            }
-//
-//            // 发送响应
-//            if (!response.empty()) {
-//                OVERLAPPED writeOverlapped = {0};
-//                writeOverlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-//
-//                DWORD bytesWritten = 0;
-//                if (!WriteFile(pipe, response.c_str(), static_cast<DWORD>(response.size()),
-//                               &bytesWritten, &writeOverlapped)) {
-//                    DWORD writeErr = GetLastError();
-//                    if (writeErr == ERROR_IO_PENDING) {
-//                        WaitForSingleObject(writeOverlapped.hEvent, INFINITE);
-//                        if (!GetOverlappedResult(pipe, &writeOverlapped, &bytesWritten, FALSE)) {
-//                            std::cerr << "Write operation failed: " << GetLastError() << std::endl;
-//                        }
-//                    } else {
-//                        std::cerr << "WriteFile failed: " << writeErr << std::endl;
-//                    }
-//                }
-//                CloseHandle(writeOverlapped.hEvent);
-//            }
-//        } else {
-//            // 客户端断开连接
-//            std::cout << "Client disconnected" << std::endl;
-//            break;
-//        }
-//
-//        // 重置事件对象以备下次读取
-//        ResetEvent(readOverlapped.hEvent);
-//    }
-//
-//// 清理客户端
-//    EnterCriticalSection(&clients_mutex_);
-//    auto it = std::find_if(clients_.begin(), clients_.end(), [pipe](HANDLE h) { return h == pipe; });
-//    if (it != clients_.end()) {
-//        clients_.erase(it);
-//    }
-//    LeaveCriticalSection(&clients_mutex_);
-//
-//// 清理资源
-//    CloseHandle(readOverlapped.hEvent);
-//    DisconnectNamedPipe(pipe);
-//    CloseHandle(pipe);
-//}

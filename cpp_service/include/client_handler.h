@@ -18,6 +18,10 @@ public:
      */
     void run();
 
+    /**
+     * 做退出检查
+     */
+    void stop();
 private:
     /**
      * 主循环 使用readFile从控制管道一直读取信息
@@ -51,15 +55,19 @@ private:
 
     bool sendControlMessage(const nlohmann::json& msg);
 
-    bool readControlMessage(nlohmann::json& msgJson, int delay = 0);
+    bool readControlMessage(nlohmann::json& msgJson, int delay);
+
+    bool sendDataMessage(const nlohmann::json& msg);
 
     HANDLE m_hControlPipe;
     HANDLE m_hDataPipe;
 
     OVERLAPPED m_readOvl;        // 用于控制通道读取的OVERLAPPED结构
     OVERLAPPED m_writeOvl;       // 用于控制通道写入的OVERLAPPED结构
+    OVERLAPPED m_writeDataOvl;       // 用于数据通道写入的OVERLAPPED结构
     HANDLE m_hReadEvent;         // 用于控制通道读取操作完成时触发的事件
     HANDLE m_hWriteEvent;        // 用于控制通道写入操作完成时触发的事件
+    HANDLE m_hDataWriteEvent;        // 用于数据通道写入操作完成时触发的事件
 
     SeqGenerator m_seq_counter;
     std::atomic<bool> m_sessionActive;
